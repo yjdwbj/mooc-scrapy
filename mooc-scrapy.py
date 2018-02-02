@@ -52,8 +52,18 @@ urls = [
         #'https://www.icourse163.org/learn/UESTC-234010?tid=274005#/learn/content?type=detail&id=780283&cid=1003948427',
         #'https://www.icourse163.org/learn/ZJU-21001?tid=1001774003#/learn/content?type=detail&id=1002295118&cid=1002435215',
         #'https://www.icourse163.org/learn/TONGJI-284001?tid=331001#/learn/content?type=detail&id=851156&cid=949215'
-        'https://www.icourse163.org/learn/BIT-47001?tid=275015#/learn/content?type=detail&id=543258&cid=572757',
-        'https://www.icourse163.org/learn/UESTC-234010?tid=274005#/learn/content?type=detail&id=780283&cid=1003950626',
+        #'https://www.icourse163.org/learn/BIT-47001?tid=275015#/learn/content?type=detail&id=543258&cid=572757',
+        #'https://www.icourse163.org/learn/UESTC-234010?tid=274005#/learn/content?type=detail&id=780283&cid=1003950626',
+        # 高等数学习题课（一）
+        'https://www.icourse163.org/learn/HIT-431001?tid=1002581006#/learn/content?type=detail&id=1003559012&cid=1004229031',
+        #高等数学典型例题与解法（一）
+        'https://www.icourse163.org/learn/NUDT-1001616011?tid=1002309003#/learn/content?type=detail&id=1003090040&cid=1003644145',
+        #大数据算法 王宏志
+        'https://www.icourse163.org/learn/HIT-10001?tid=253002#/learn/content?type=detail&id=520184&cid=550701',
+        # 大数据技术原理与应用
+        'https://www.icourse163.org/learn/XMU-1002335004?tid=1002458005#/learn/content?type=detail&id=1003335004',
+        #嵌入式系统与实验
+        'https://www.icourse163.org/learn/XMU-1001766012?tid=1002316003#/learn/content?type=detail&id=1003145431&cid=1003746451',
         'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
         
         ]
@@ -121,6 +131,8 @@ def section_list(chapterdir):
         if videosrc is None:
             continue
         p = BeautifulSoup(videosrc.get_attribute('innerHTML'),'lxml')
+        if p is None:
+            continue
         src = p.source['src']
         foutput = chapterdir +"/"+title+".mp4"
         print("save to directiry ",foutput)
@@ -180,7 +192,18 @@ def get_course(url):
     if not os.path.exists(lessondir):
         os.mkdir(lessondir)
         # chapter list box
-    chapterbox = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]')
+    chapterbox = None
+    try:
+        chapterbox = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]')
+    except NoSuchElementException:
+        icon = browser.find_element_by_class_name('u-icon-video2')
+        icon.click()
+        time.sleep(2)
+        chapterbox = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]')
+     
+    if chapterbox is None:
+        return
+        
     print(chapterbox.get_attribute('innerHTML'))
     chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div ') 
     print("chapers size " , len(chapters))                       
@@ -230,14 +253,4 @@ if __name__ == '__main__':
     for url in urls:
         print("get from",url)
         get_course(url)
-        
-
-    
-
-
-   
-    
-
-               
-
-    
+       
