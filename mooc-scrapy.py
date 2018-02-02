@@ -50,8 +50,12 @@ user_agent = '''User-Agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (K
 
 urls = [
         #'https://www.icourse163.org/learn/UESTC-234010?tid=274005#/learn/content?type=detail&id=780283&cid=1003948427',
-        'https://www.icourse163.org/learn/ZJU-21001?tid=1001774003#/learn/content?type=detail&id=1002295118&cid=1002435215',
-        'https://www.icourse163.org/learn/TONGJI-284001?tid=331001#/learn/content?type=detail&id=851156&cid=949215'
+        #'https://www.icourse163.org/learn/ZJU-21001?tid=1001774003#/learn/content?type=detail&id=1002295118&cid=1002435215',
+        #'https://www.icourse163.org/learn/TONGJI-284001?tid=331001#/learn/content?type=detail&id=851156&cid=949215'
+        'https://www.icourse163.org/learn/BIT-47001?tid=275015#/learn/content?type=detail&id=543258&cid=572757',
+        'https://www.icourse163.org/learn/UESTC-234010?tid=274005#/learn/content?type=detail&id=780283&cid=1003950626',
+        'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
+        
         ]
 
 # 大学英语（口语）CAP_中国大学MOOC(慕课)
@@ -164,7 +168,8 @@ def get_course(url):
     browser.get(url)
     time.sleep(5)
     try:
-        lastlearn = browser.find_element_by_class_name('tnt')
+        #lastlearn = browser.find_element_by_class_name('tnt')
+        lastlearn = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div[1]/div/div[1]/div/a[1]')
         lastlearn.click()
         time.sleep(4)
     except NoSuchElementException:
