@@ -61,7 +61,7 @@ urls = [
         #*大数据算法 王宏志
         #'https://www.icourse163.org/learn/HIT-10001?tid=253002#/learn/content?type=detail&id=520184&cid=550701',
         # 大数据技术原理与应用
-        'https://www.icourse163.org/learn/XMU-1002335004?tid=1002458005#/learn/content?type=detail&id=1003335004',
+        #'https://www.icourse163.org/learn/XMU-1002335004?tid=1002458005#/learn/content?type=detail&id=1003335004',
         #嵌入式系统与实验
         'https://www.icourse163.org/learn/XMU-1001766012?tid=1002316003#/learn/content?type=detail&id=1003145431&cid=1003746451',
         'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
@@ -104,7 +104,7 @@ def lesson_list(chapterdir):
         lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
         lname = lessons[i].get_attribute('title')
         print(lname)
-        lessondir = chapterdir + "/" + lname
+        lessondir = chapterdir + "/" + lname.replace('/','|')
         if not os.path.exists(lessondir):
             os.mkdir(lessondir)
         section_list(lessondir)
@@ -116,8 +116,11 @@ def section_list(chapterdir):
     
     for i in range(0,len(sections)):
         sections = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')
-        sections[i].click()
-        time.sleep(3)
+        try:
+            sections[i].click()
+            time.sleep(5)
+        except:
+            continue;
         sections = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')
         title = sections[i].get_attribute('title')
         if '视频' not in title:
@@ -138,7 +141,7 @@ def section_list(chapterdir):
         if p is None:
             continue
         src = p.source['src']
-        foutput = chapterdir +"/"+title+".mp4"
+        foutput = chapterdir +"/"+title.replace('/','|')+".mp4"
         print("save to directiry ",foutput)
         print("download video ",src)
         os.system('wget --progress=dot --wait=3 --read-timeout=10 -t 5 --user-agent="%s" -c %s -O "%s"'
@@ -219,7 +222,8 @@ def get_course(url):
         chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div') 
         cname = chapters[i].get_attribute('title')
         print("open chapter ",cname)
-        chapterdir = lessondir + "/" + cname
+        #cname.replace('/','|')
+        chapterdir = lessondir + "/" + cname.replace('/','|')
         if not os.path.exists(chapterdir):
             os.mkdir(chapterdir)
         lesson_list(chapterdir)
