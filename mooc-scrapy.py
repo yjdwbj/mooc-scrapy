@@ -63,7 +63,7 @@ urls = [
         # 大数据技术原理与应用
         #'https://www.icourse163.org/learn/XMU-1002335004?tid=1002458005#/learn/content?type=detail&id=1003335004',
         #嵌入式系统与实验
-        'https://www.icourse163.org/learn/XMU-1001766012?tid=1002316003#/learn/content?type=detail&id=1003145431&cid=1003746451',
+        #'https://www.icourse163.org/learn/XMU-1001766012?tid=1002316003#/learn/content?type=detail&id=1003145431&cid=1003746451',
         'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
         
         ]
@@ -104,7 +104,7 @@ def lesson_list(chapterdir):
         lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
         lname = lessons[i].get_attribute('title')
         print(lname)
-        lessondir = chapterdir + "/" + lname.replace('/','|')
+        lessondir = chapterdir + "/" + lname
         if not os.path.exists(lessondir):
             os.mkdir(lessondir)
         section_list(lessondir)
@@ -116,11 +116,8 @@ def section_list(chapterdir):
     
     for i in range(0,len(sections)):
         sections = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')
-        try:
-            sections[i].click()
-            time.sleep(5)
-        except:
-            continue;
+        sections[i].click()
+        time.sleep(3)
         sections = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')
         title = sections[i].get_attribute('title')
         if '视频' not in title:
@@ -141,7 +138,7 @@ def section_list(chapterdir):
         if p is None:
             continue
         src = p.source['src']
-        foutput = chapterdir +"/"+title.replace('/','|')+".mp4"
+        foutput = chapterdir +"/"+title+".mp4"
         print("save to directiry ",foutput)
         print("download video ",src)
         os.system('wget --progress=dot --wait=3 --read-timeout=10 -t 5 --user-agent="%s" -c %s -O "%s"'
@@ -161,8 +158,12 @@ def email_login():
     print("pwd","*****")
     browser.get('https://www.icourse163.org/')
     time.sleep(5)
-    loginbtn = browser.find_element_by_class_name('m-index-person-loginBtn')
-    loginbtn.click()
+    try:
+        relogin = browser.find_element_by_id('j-reLogin')
+        relogin.click()
+    except NoSuchElementException:
+        loginbtn = browser.find_element_by_class_name('m-index-person-loginBtn')
+        loginbtn.click()
     time.sleep(5)
     urs = browser.find_element_by_id('j-ursContainer')
     iframe1 = urs.find_element_by_xpath('.//iframe')
@@ -214,7 +215,8 @@ def get_course(url):
     print(chapterbox.get_attribute('innerHTML'))
     chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div ') 
     print("chapers size " , len(chapters))                       
-    for i in range(0,len(chapters)):
+    for i in range(9,len(chapters)):
+        chapterbox = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]')
         chapterbox.click()  # open list box
         chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div') 
         chapters[i].click()
@@ -222,8 +224,7 @@ def get_course(url):
         chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div') 
         cname = chapters[i].get_attribute('title')
         print("open chapter ",cname)
-        #cname.replace('/','|')
-        chapterdir = lessondir + "/" + cname.replace('/','|')
+        chapterdir = lessondir + "/" + cname
         if not os.path.exists(chapterdir):
             os.mkdir(chapterdir)
         lesson_list(chapterdir)
