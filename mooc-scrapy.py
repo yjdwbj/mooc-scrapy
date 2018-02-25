@@ -64,8 +64,10 @@ urls = [
         #'https://www.icourse163.org/learn/XMU-1002335004?tid=1002458005#/learn/content?type=detail&id=1003335004',
         #嵌入式系统与实验
         #'https://www.icourse163.org/learn/XMU-1001766012?tid=1002316003#/learn/content?type=detail&id=1003145431&cid=1003746451',
-        'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
-        
+        #'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
+        'https://www.icourse163.org/course/ZJU-232005?tid=1001794018',
+        #人工智能系列前沿课程
+        'https://www.icourse163.org/learn/MSRA-1002435001?tid=1002591003#/learn/content?type=detail&id=1003562081&cid=1004266113'
         ]
 
 # 大学英语（口语）CAP_中国大学MOOC(慕课)
@@ -92,17 +94,17 @@ def lesson_list(chapterdir):
     lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
     print("lessons size" , len(lessons))
     for i in range(0,len(lessons)):
-        cboxs = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]');
-        cboxs.click() # open lesson box
+        browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]').click()
+        # open lesson box
         lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
+        lname = None
         try:
             lessons[i].click()
             time.sleep(2)
+            lname = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')[i].get_attribute('title')
         except IndexError:
             continue
         
-        lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
-        lname = lessons[i].get_attribute('title')
         print(lname)
         lessondir = chapterdir + "/" + lname
         if not os.path.exists(lessondir):
@@ -115,29 +117,27 @@ def section_list(chapterdir):
     [x.get_attribute('title') for x in sections]
     
     for i in range(0,len(sections)):
-        sections = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')
-        sections[i].click()
+        browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')[i].click()
         time.sleep(3)
-        sections = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')
-        title = sections[i].get_attribute('title')
+        title = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')[i].get_attribute('title')
         if '视频' not in title:
             continue
         print('section title ',title)
         #browser.get("https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103232")
         #videosrc = browser.find_element_by_tag_name('source')
         #src = videosrc.get_attribute('src')
-        videosrc = None
+        src = None
         try:
-            videosrc = browser.find_element_by_tag_name('video')
-        except NoSuchElementException:
+            html = BeautifulSoup(browser.find_element_by_tag_name('video').get_attribute('innerHTML'),'lxml')
+            src = html.source['src']
+        except :
             print(title,'not found video ,skip  continue!!!!!!')
             continue
-        if videosrc is None:
-            continue
-        p = BeautifulSoup(videosrc.get_attribute('innerHTML'),'lxml')
-        if p is None:
-            continue
-        src = p.source['src']
+        
+        autoplay = browser.find_element_by_class_name('j-autoNext')
+        if autoplay.is_selected():
+            autoplay.click()
+        
         foutput = chapterdir +"/"+title+".mp4"
         print("save to directiry ",foutput)
         print("download video ",src)
@@ -187,16 +187,28 @@ def check_login():
 def get_course(url):
     browser.get(url)
     time.sleep(5)
+    
+    try:
+        browser.find_element_by_xpath('//*[@id="course-enroll-info"]/div/div[2]/div[2]/div[1]/span').click()
+        time.sleep(5)
+    except NoSuchElementException:
+        print("not found xpath")
+        pass
+    
     try:
         #lastlearn = browser.find_element_by_class_name('tnt')
-        lastlearn = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div[1]/div/div[1]/div/a[1]')
-        lastlearn.click()
+        browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div[1]/div/div[1]/div/a[1]').click()
         time.sleep(4)
     except NoSuchElementException:
         print("not found tnt class name")
         pass
     
-    lessondir = outdir + "/" + browser.title
+   
+    
+    # //*[@id="g-body"]/div[3]/div/a
+    schoolname = browser.find_element_by_xpath('//*[@id="g-body"]/div[3]/div/a')
+    print(schoolname)
+    lessondir = outdir + "/" + schoolname.get_attribute('title')  + "_" +  browser.title
     if not os.path.exists(lessondir):
         os.mkdir(lessondir)
         # chapter list box
@@ -215,9 +227,9 @@ def get_course(url):
     print(chapterbox.get_attribute('innerHTML'))
     chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div ') 
     print("chapers size " , len(chapters))                       
-    for i in range(9,len(chapters)):
-        chapterbox = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]')
-        chapterbox.click()  # open list box
+    for i in range(0,len(chapters)):
+        browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]').click()
+        # open list box
         chapters = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[1]/div/div[2]/div') 
         chapters[i].click()
         time.sleep(2)
@@ -262,14 +274,4 @@ if __name__ == '__main__':
     for url in urls:
         print("get from",url)
         get_course(url)
-        
-
-    
-
-
-   
-    
-
-               
-
-    
+       
