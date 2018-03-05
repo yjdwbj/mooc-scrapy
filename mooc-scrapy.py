@@ -11,6 +11,14 @@ import os,time
 import json
 from getpass import getpass
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+import subprocess  
+
+
+
+  
+
 
 
 from selenium.common.exceptions import (ElementClickInterceptedException,
@@ -80,6 +88,7 @@ urls = [
 browser = webdriver.Chrome(executable_path="./chromedriver")
 
 
+
 #Firefox Driver
 #binary = FirefoxBinary("/opt/pkg/firefox/firefox")
 #profile = webdriver.FirefoxProfile()
@@ -94,13 +103,16 @@ def lesson_list(chapterdir):
     lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
     print("lessons size" , len(lessons))
     for i in range(0,len(lessons)):
-        browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]').click()
+        try:
+            browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]').click()
+        except:
+            continue
         # open lesson box
         lessons = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')
         lname = None
         try:
             lessons[i].click()
-            time.sleep(2)
+            time.sleep(3)
             lname = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[1]/div[1]/div/div[2]/div/div[2]/div')[i].get_attribute('title')
         except IndexError:
             continue
@@ -117,7 +129,10 @@ def section_list(chapterdir):
     [x.get_attribute('title') for x in sections]
     
     for i in range(0,len(sections)):
-        browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')[i].click()
+        try:
+            browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')[i].click()
+        except :
+            continue
         time.sleep(3)
         title = browser.find_elements_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/ul/li')[i].get_attribute('title')
         if '视频' not in title:
@@ -137,12 +152,28 @@ def section_list(chapterdir):
         autoplay = browser.find_element_by_class_name('j-autoNext')
         if autoplay.is_selected():
             autoplay.click()
+        #ctlbar = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/div[1]/div[2]/div[1]/div[2]')
+# =============================================================================
+#         ctlbar = browser.find_element_by_class_name('u-edu-h5player')
+#         print(ctlbar.get_attribute('innerHTML'))  
+#         print("//div[7]/div[3]/div[2]/div")
+#        actions.move_to_element(browser.find_element_by_class_name('u-edu-h5player'))
+        player = browser.find_element_by_class_name('u-edu-h5player')
+#        ActionChains(browser).move_to_element(player).key_down(Keys.SPACE).perform()
+        ActionChains(browser).click(player).perform()
+#        browser.find_element_by_class_name('u-edu-h5player').send_keys(Keys.SPACE) # stop player 
+
         
         foutput = chapterdir +"/"+title+".mp4"
         print("save to directiry ",foutput)
         print("download video ",src)
-        os.system('wget --progress=dot --wait=3 --read-timeout=10 -t 5 --user-agent="%s" -c %s -O "%s"'
-                  %(user_agent,src,foutput))
+        cmds = ['wget','--wait=3','--read-timeout=10','-t','5','--user-agent="%s"' % user_agent,
+                '-c','%s' % src, '-O','%s' % foutput]
+        child = subprocess.Popen(cmds,stdout=subprocess.PIPE)
+        
+        while "Giving up." in child.communicate():
+            child = subprocess.Popen(cmds,stdout=subprocess.PIPE)
+            print("download Giving up. retry......")
         print("download ok!!!!!!!!!!!")
         
         
