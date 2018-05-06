@@ -5,5 +5,6 @@
 ##### Requirements
 * Python 3.x
 * wget
-* BeautifulSoup
+* BeautifulSoup4
 * Selenium
+* lxml
