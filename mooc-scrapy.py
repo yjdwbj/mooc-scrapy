@@ -54,6 +54,7 @@ from selenium.common.exceptions import (ElementClickInterceptedException,
 
 outdir = "output"
 cookies_file="cookies.ini"
+curl_cookies='curl_cookies.txt'
 user_agent = '''User-Agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'''
 
 urls = [
@@ -73,9 +74,21 @@ urls = [
         #嵌入式系统与实验
         #'https://www.icourse163.org/learn/XMU-1001766012?tid=1002316003#/learn/content?type=detail&id=1003145431&cid=1003746451',
         #'https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103175&cid=1003666909',
-        'https://www.icourse163.org/course/ZJU-232005?tid=1001794018',
+        #'https://www.icourse163.org/course/ZJU-232005?tid=1001794018',
         #人工智能系列前沿课程
-        'https://www.icourse163.org/learn/MSRA-1002435001?tid=1002591003#/learn/content?type=detail&id=1003562081&cid=1004266113'
+        #'https://www.icourse163.org/learn/MSRA-1002435001?tid=1002591003#/learn/content?type=detail&id=1003562081&cid=1004266113'
+        # 人工智能实践：Tensorflow笔记
+        #'https://www.icourse163.org/learn/PKU-1002536002?tid=1002700003',
+        #Python科学计算三维可视化
+        #'https://www.icourse163.org/learn/BIT-1001871001?tid=1002481001',
+        #微积分（二）
+        #'https://www.icourse163.org/learn/BIT-47001?tid=275015',
+        #高等数学（三）
+        #'https://www.icourse163.org/learn/TONGJI-284001?tid=331001',
+        #中国近现代史纲要
+        'https://www.icourse163.org/learn/ZJU-21001?tid=1001774003',
+        #图片机器人操作系统入门
+        'https://www.icourse163.org/course/ISCAS-1002580008'
         ]
 
 # 大学英语（口语）CAP_中国大学MOOC(慕课)
@@ -141,16 +154,21 @@ def section_list(chapterdir):
         #browser.get("https://www.icourse163.org/learn/NUDT-438002?tid=1002283003#/learn/content?type=detail&id=1003103232")
         #videosrc = browser.find_element_by_tag_name('source')
         #src = videosrc.get_attribute('src')
+        player = browser.find_element_by_class_name('u-edu-h5player')
+        if not player:
+            print("why not find u-edu-h5player")
+        ActionChains(browser).click(player).perform()
         src = None
         try:
             html = BeautifulSoup(browser.find_element_by_tag_name('video').get_attribute('innerHTML'),'lxml')
             src = html.source['src']
-        except :
+        except:
             print(title,'not found video ,skip  continue!!!!!!')
             continue
         
         autoplay = browser.find_element_by_class_name('j-autoNext')
         if autoplay.is_selected():
+            print("autoplay clicked")
             autoplay.click()
         #ctlbar = browser.find_element_by_xpath('//*[@id="courseLearn-inner-box"]/div/div/div[3]/div[1]/div[2]/div[1]/div[2]')
 # =============================================================================
@@ -158,18 +176,19 @@ def section_list(chapterdir):
 #         print(ctlbar.get_attribute('innerHTML'))  
 #         print("//div[7]/div[3]/div[2]/div")
 #        actions.move_to_element(browser.find_element_by_class_name('u-edu-h5player'))
-        player = browser.find_element_by_class_name('u-edu-h5player')
 #        ActionChains(browser).move_to_element(player).key_down(Keys.SPACE).perform()
-        ActionChains(browser).click(player).perform()
 #        browser.find_element_by_class_name('u-edu-h5player').send_keys(Keys.SPACE) # stop player 
 
         
         foutput = chapterdir +"/"+title+".mp4"
         print("save to directiry ",foutput)
         print("download video ",src)
-        cmds = ['wget','--wait=3','--read-timeout=10','-t','5','--user-agent="%s"' % user_agent,
+        cmds = ['wget','--load-cookies=%s' % cookies_file,'--wait=3','--read-timeout=10','-t','5','--user-agent="%s"' % user_agent,
                 '-c','%s' % src, '-O','%s' % foutput]
-        child = subprocess.Popen(cmds,stdout=subprocess.PIPE)
+        curls = ['curl','-L','-b','%s' % curl_cookies,'-o','%s' % foutput,'-C','-','%s' %src]
+        
+        #child = subprocess.Popen(cmds,stdout=subprocess.PIPE)
+        child = subprocess.Popen(curls,stdout=subprocess.PIPE)
         
         while "Giving up." in child.communicate():
             child = subprocess.Popen(cmds,stdout=subprocess.PIPE)
@@ -208,7 +227,8 @@ def email_login():
     time.sleep(3)
     browser.switch_to_default_content()
     cookies = browser.get_cookies()
-    print("cookies---> ",cookies)
+    print("will write cookies type ",type(cookies))
+    print("cookies",cookies)
     json.dump(cookies,open(cookies_file,"w"))
     #pickle.dump( browser.get_cookies() , open("cookies.ini","wb"))
 
@@ -272,6 +292,16 @@ def get_course(url):
             os.mkdir(chapterdir)
         lesson_list(chapterdir)
 
+def dumpdict(x):
+    l = [];
+    for key,value in x.items():
+        print("key: ",key)
+        print("val: ",value)
+        temp="%s=%s;" % (key,value)
+        l.append(temp)
+    print("cookies list:",l)
+    print("-------------------------------------------------------")
+
 if __name__ == '__main__':
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -284,6 +314,10 @@ if __name__ == '__main__':
         email_login()
         
     print("cookies type",type(cookies))
+    print("cookies list len", len(cookies))
+    with open(curl_cookies,'w') as fd:
+        [fd.write('%s=%s;' % (x['name'],x['value'])) for x in cookies]
+        
     browser.get('https://www.icourse163.org/')
     #newlist = browser.get_cookies()
    
@@ -305,4 +339,4 @@ if __name__ == '__main__':
     for url in urls:
         print("get from",url)
         get_course(url)
-       
+        
